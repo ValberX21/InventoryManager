@@ -15,7 +15,7 @@ namespace InventoryManager.Tests
         public void Setup()
         {
             _mockRep = new Mock<IProductRepository>();
-            _productservice = new ProductService(_mockRep.Object);
+            _productservice = new ProductService(_mockRep.Object,null);
         }
 
         [Test]
