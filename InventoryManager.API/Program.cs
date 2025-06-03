@@ -99,6 +99,8 @@ builder.Services.AddControllers()
 builder.Services.AddHealthChecks()
     .AddSqlServer(configuration["ConnectionStrings:DefaultConnection"]); // example with SQL Server
 
+builder.WebHost.UseUrls("http://0.0.0.0:80");
+
 
 var app = builder.Build();
 
@@ -110,11 +112,10 @@ app.MapHealthChecksUI(options =>
 });
 
 
-if (app.Environment.IsDevelopment())
-{
+
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+
 
 app.UseHttpsRedirection();
 

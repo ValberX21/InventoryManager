@@ -1,0 +1,33 @@
+version: '3.9'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: inventory-sql
+    environment:
+      SA_PASSWORD: "Test1234!"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      MSSQL_DATABASE: "InventoryDBDocker"
+    ports:
+      - "1433:1433"
+    networks:
+      - backend
+
+  api:
+    build:
+      context: .
+      dockerfile: InventoryManager.API/Dockerfile
+    container_name: inventory-api
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=InventoryDBDocker;User Id=sa;Password=Test1234!;TrustServerCertificate=true;"
+    ports:
+      - "8080:80"
+    depends_on:
+      - sqlserver
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
