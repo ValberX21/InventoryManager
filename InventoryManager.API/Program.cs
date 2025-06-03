@@ -1,4 +1,4 @@
-using FluentValidation.AspNetCore;
+﻿using FluentValidation.AspNetCore;
 using InventoryManager.Application.Interface;
 using InventoryManager.Application.Services;
 using InventoryManager.Application.Validation;
@@ -21,7 +21,6 @@ builder.Host.UseSerilog();
 SerilogConfig.ConfigureLogging();
 var configuration = builder.Configuration;
 
-builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -43,6 +42,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = configuration["Jwt:Issuer"],
             ValidAudience = configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!))
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                if (context.Exception is SecurityTokenExpiredException)
+                {
+                    context.Response.Headers.Add("Token-Expired", "true");
+                }
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                Console.WriteLine("✅ JWT validated successfully.");
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -80,8 +96,18 @@ builder.Services.AddControllers()
     });
 #pragma warning restore CS0618 // Type or member is obsolete
 
+builder.Services.AddHealthChecks()
+    .AddSqlServer(configuration["ConnectionStrings:DefaultConnection"]); // example with SQL Server
+
 
 var app = builder.Build();
+
+app.MapHealthChecks("/health");
+
+app.MapHealthChecksUI(options =>
+{
+    options.UIPath = "/health-ui"; // dashboard
+});
 
 
 if (app.Environment.IsDevelopment())
